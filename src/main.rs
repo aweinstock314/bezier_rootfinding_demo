@@ -1,3 +1,4 @@
+use std::ops::{Add, Mul, Neg, Sub};
 use macroquad::prelude::{clear_background, draw_line, next_frame, LIGHTGRAY, BLUE, screen_height, screen_width, GREEN, RED, draw_circle, draw_text, DARKGRAY};
 use vek::*;
 
@@ -20,6 +21,173 @@ fn quadform(a: f32, b: f32, c: f32) -> [f32; 2] {
 	let disc = (b*b - 4.0 * a * c).sqrt();
 	[(-b + disc) / (2.0 * a), (-b - disc) / (2.0 * a)]
 } 
+
+
+/*
+>>> f = (1-t)**3 * a + (1-t)**2*t * b + (1-t)*t**2 * c + t**3 * d
+>>> f
+a*(1 - t)**3 + b*t*(1 - t)**2 + c*t**2*(1 - t) + d*t**3
+>>> f.as_poly(t)
+Poly((-a + b - c + d)*t**3 + (3*a - 2*b + c)*t**2 + (-3*a + b)*t + a, t, domain='ZZ[a,b,c,d]')
+*/
+
+#[derive(Clone, Debug)]
+enum SFormula {
+	T,
+	F(f32),
+	Pow(Box<SFormula>, f32),
+	SoP(Vec<Vec<SFormula>>),
+	Dot(Box<(VFormula, VFormula)>),
+}
+
+#[derive(Clone, Debug)]
+enum VFormula {
+	P(usize),
+	SMul(SFormula, Box<VFormula>),
+	Sum(Vec<VFormula>),
+}
+
+impl SFormula {
+	fn pow(&self, x: f32) -> SFormula {
+		SFormula::Pow(Box::new(self.clone()), x)
+	}
+}
+
+impl VFormula {
+	fn dot(&self, other: &Self) -> SFormula {
+		SFormula::Dot(Box::new((self.clone(), other.clone())))
+	}
+	fn flatten(self) -> VFormula {
+		match self {
+			VFormula::P(i) => VFormula::P(i),
+			VFormula::SMul(s, f) => {
+				let g = f.flatten();
+				if let VFormula::Sum(gs) = g {
+					VFormula::Sum(gs.into_iter().map(|g| VFormula::SMul(s.clone(), Box::new(g)).flatten()).collect())
+				} else {
+					VFormula::SMul(s, Box::new(g))
+				}
+			}
+			VFormula::Sum(fs) => {
+				let mut ret = Vec::new();
+				for f in fs {
+					let g = f.flatten();
+					if let VFormula::Sum(gs) = g {
+						ret.extend(gs)
+					} else {
+						ret.push(g)
+					}
+				}
+				VFormula::Sum(ret)
+			}
+		}
+	}
+}
+
+impl Neg for VFormula {
+	type Output = VFormula;
+	fn neg(self) -> VFormula {
+		VFormula::SMul(SFormula::F(-1.0), Box::new(self))
+	}
+}
+
+impl Add<VFormula> for VFormula {
+	type Output = VFormula;
+	fn add(self, other: VFormula) -> VFormula {
+		VFormula::Sum(vec![self, other]).flatten()
+	}
+}
+impl Mul<SFormula> for VFormula {
+	type Output = VFormula;
+	fn mul(self, other: SFormula) -> VFormula {
+		VFormula::SMul(other, Box::new(self))
+	}
+}
+impl Mul<VFormula> for f32 {
+	type Output = VFormula;
+	fn mul(self, other: VFormula) -> VFormula {
+		VFormula::SMul(SFormula::F(self), Box::new(other))
+	}
+}
+impl Sub<VFormula> for VFormula {
+	type Output = VFormula;
+	fn sub(self, other: VFormula) -> VFormula {
+		self + (-other)
+	}
+}
+
+#[test]
+fn test_derivative() {
+	use VFormula::P;
+	use SFormula::T;
+	let f = (-P(0) + P(1) - P(2) + P(3))*T.pow(3.0) + (3.0 * P(0) - 2.0 * P(1) + P(2)) * T.pow(2.0) + (-3.0 * P(0) + P(1))*T;
+	println!("{:?}", f);
+}
+
+const EPSILON: f32 = 0.0001;
+
+fn secant<F: Fn(f32) -> f32>(f: &F, mut x0: f32, mut x1: f32) -> f32 {
+	let mut y0 = f(x0);
+	let mut y1 = f(x1);
+	let mut x2 = x1 - y1*(x1 - x0)/(y1 - y0);
+	while y1.abs() > EPSILON {
+		x0 = x1;
+		x1 = x2;
+		y0 = f(x0);
+		y1 = f(x1);
+		x2 = x1 - y1 * (x1 - x0) / (y1 - y0);
+	}
+	x2
+}
+
+fn newton_raphson<F: Fn(f32) -> f32, F1: Fn(f32) -> f32>(f: &F, f1: &F1, mut x0: f32) -> f32 {
+	let mut y0 = f(x0);
+	let mut x1 = x0 - y0 / f1(x0);
+	while y0.abs() > EPSILON {
+		x0 = x1;
+		y0 = f(x0);
+		x1 = x0 - y0 / f1(x0);
+	}
+	x1
+}
+
+#[test]
+fn test_rootfinding() {
+	let f = |x: f32| -x*x + 3.0 * x + 5.0;
+	let f1 = |x: f32| -2.0 * x + 3.0;
+	let f2 = |x: f32| -2.0;
+	let x = secant(&f, 0.0, 1.0);
+	println!("secant f: {:?} {:?} {:?}", x, f(x), f1(x));
+	let x1 = secant(&f1, 0.0, 1.0);
+	println!("secant f1: {:?} {:?} {:?}", x1, f(x1), f1(x1));
+	let x2 = newton_raphson(&f, &f1, 1.0);
+	println!("nr f f1: {:?} {:?} {:?}", x2, f(x2), f1(x2));
+	let x3 = newton_raphson(&f1, &f2, 1.0);
+	println!("nr f1 f2: {:?} {:?} {:?}", x3, f(x3), f1(x3));
+
+}
+
+fn gradient_descent<F: Fn(f32) -> f32>(f: &F, alpha: f32, mut x0: f32) -> f32 {
+	let mut y0 = f(x0);
+	loop {
+		let grad = (f(x0 + EPSILON) - y0) / EPSILON;
+		let x1 = x0 - alpha * grad;
+		let y1 = f(x1);
+		if grad == 0.0 || y0 < y1 {
+			return x0; 
+		}
+		x0 = x1;
+		y0 = y1;
+	}
+}
+
+#[test]
+fn test_gradientdescent() {
+	let f = |x: f32| -x*x + 3.0 * x + 5.0;
+	// Objective is negated because gradient_descent finds minima and we're trying to find a maximum
+	let x = gradient_descent(&|x| -f(x), 0.1, 1.0);
+	println!("gradient_descent: {} {}", x, f(x));
+}
 
 #[macroquad::main("BasicShapes")]
 async fn main() {
