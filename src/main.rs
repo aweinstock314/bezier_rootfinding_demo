@@ -189,6 +189,28 @@ fn test_gradientdescent() {
 	println!("gradient_descent: {} {}", x, f(x));
 }
 
+#[test]
+fn test_gradientdescent_bezier() {
+	let w = 1.0;
+	let h = 1.0;
+	let a = Vec2::new(0.05 * w, h/2.0);
+	let d = Vec2::new(0.9 * w, h/2.0);
+	let b = Lerp::lerp(a, d, 0.5) + Vec2::new(0.0, h / 2.0);
+	let c = Lerp::lerp(a, d, 0.9) + Vec2::new(0.0, -h / 3.0);
+
+	let f = |t: f32| {
+		let f1 = 3.0 * (1.0-t)*(1.0 - t)*(b - a) + 6.0*(1.0-t)*t*(c - b) + 3.0 * t * t * (d - c);
+		let f2 = 6.0 * (1.0 - t) * (c - 2.0 * b + a) + 6.0 * t * (d - 2.0 * c + b);
+		let k = (f1.magnitude_squared() * f2.magnitude_squared() - f1.dot(f2).powf(2.0)).sqrt()/f1.magnitude_squared().powf(3.0);
+		k
+	};
+	let t0 = gradient_descent(&|x| -f(x), 0.001, 0.0);
+	println!("gradient_descent_bezier: {} {}", t0, f(t0));
+	let t1 = gradient_descent(&|x| -f(x), 0.001, 1.0);
+	println!("gradient_descent_bezier: {} {}", t1, f(t1));
+
+}
+
 #[macroquad::main("BasicShapes")]
 async fn main() {
     loop {
@@ -241,6 +263,21 @@ async fn main() {
 				draw_circle(f.x, f.y, 2.5, RED);
 			}
 		}
+		let f = |t: f32| {
+			let sz = Vec2::new(w, h);
+			let (a, b, c, d) = (a / sz, b / sz, c / sz, d / sz);
+			let f1 = 3.0 * (1.0-t)*(1.0 - t)*(b - a) + 6.0*(1.0-t)*t*(c - b) + 3.0 * t * t * (d - c);
+			let f2 = 6.0 * (1.0 - t) * (c - 2.0 * b + a) + 6.0 * t * (d - 2.0 * c + b);
+			let k = (f1.magnitude_squared() * f2.magnitude_squared() - f1.dot(f2).powf(2.0)).sqrt()/f1.magnitude_squared().powf(3.0);
+			k
+		};
+		let t0 = gradient_descent(&|x| -f(x), 0.001, 0.0);
+		let t1 = gradient_descent(&|x| -f(x), 0.001, 1.0);
+		let p0 = bz.evaluate(t0);
+		let p1 = bz.evaluate(t1);
+		draw_circle(p0.x, p0.y, 2.5, DARKGRAY);
+		draw_circle(p1.x, p1.y, 2.5, DARKGRAY);
+
 		/*let mut prev = a;
 		for i in 1..=16 {
 			let next = bz.evaluate(i as f32 / 16.0);
