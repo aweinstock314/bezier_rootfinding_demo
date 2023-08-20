@@ -256,7 +256,7 @@ Poly((-6*a + 6*b - 6*c + 6*d)*t + 6*a - 4*b + 2*c, t, domain='ZZ[a,b,c,d]')
 >>> sympy.diff(sympy.diff(sympy.diff(f.as_poly(t), 't'), 't'), 't')
 Poly(-6*a + 6*b - 6*c + 6*d, t, domain='ZZ[a,b,c,d]')
 */
-        let g = |t: f32| {
+        let k_f1 = |t: f32| {
             let sz = Vec2::new(w, h);
             let (a, b, c, d) = (a / sz, b / sz, c / sz, d / sz);
             let f1 = -3.0*(a - b + c - d)*t*t + 2.0 * (3.0*a - 2.0*b + c)*t - 3.0*a + b;
@@ -267,17 +267,16 @@ Poly(-6*a + 6*b - 6*c + 6*d, t, domain='ZZ[a,b,c,d]')
             let f1f3 = f1.dot(f3);
             let f2f2 = f2.dot(f2);
             let f2f3 = f2.dot(f3);
-            println!("{}: f1f1, f1f2, f1f3, f2f2, f2f3 = {}, {}, {}, {}, {}", t, f1f1, f1f2, f1f3, f2f2, f2f3);
             let a = (f1f1 * f2f2 - f1f2.powf(2.0)).sqrt();
-            let a1 = 0.5 * (2.0*f2f2*f1f2 + 2.0 * f1f1 * f2f3 - 2.0 * f1f2*(f1f3 + f2f2)).sqrt().recip();
+            let c = 0.5 * (f1f1 * f2f2 - f1f2.powf(2.0)).sqrt().recip();
+            let a1 = c * (2.0*f2f2*f1f2 + 2.0 * f1f1 * f2f3 - 2.0 * f1f2 * (f1f3 + f2f2));
             let b = f1f1.powf(1.5);
-            let b1 = 1.5 * (2.0 * f1f2).sqrt();
+            let b1 = 3.0 * f1f1.sqrt() * f1f2;
             let k1 = (a1*b - b1 * a) / (b * b);
-            println!("{}: {} {} {}/{} {}/{} {}/{}", t, f1, f2, f3, a, a1, b, b1, k1);
             k1
         };
         //let t2 = secant(&|x: f32| { let e = 0.01; (f(x + e/2.0) - f(x - e/2.0)) / e }, 0.5, 0.6);
-        let t2 = secant(&g, 0.0, 0.1);
+        let t2 = secant(&k_f1, 0.0, 0.1);
         let p2 = bz.evaluate(t2);
         draw_text(&format!("secant t: {} {:?}", t2, p2), 20.0, 40.0, 30.0, DARKGRAY);
         draw_circle(p2.x, p2.y, 2.5, BLUE);
