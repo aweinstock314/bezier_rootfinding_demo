@@ -1,0 +1,36 @@
+\documentclass[12pt]{article}
+\usepackage{color}
+\usepackage[pdftex]{graphicx}
+\usepackage{tikz}
+\usepackage{enumerate}
+\usepackage[margin=0.25in,footskip=0.25in]{geometry}
+\usepackage[normalem]{ulem}
+\usepackage{setspace}
+\usepackage{fancyvrb}
+\usepackage{upquote}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\begin{document}
+\section{Curvature}
+$
+f, f', f'' : \mathbb{R} \rightarrow \mathbb{R}^n\\
+f'(t) = \frac{df}{dt}(t)\\
+k_f : \mathbb{R} \rightarrow \mathbb{R}\\
+k_f(t) = \frac{\sqrt{||f'(t)||^2||f''(t)||^2 - (f'(t)\cdot f''(t))^2}}{||f'(t)||^3} =
+\frac{\sqrt{f'(t)\cdot f'(t) * f''(t)\cdot f''(t) - (f'(t)\cdot f''(t))^2}}{(f'(t)\cdot f'(t))^{\frac{3}{2}}}\\
+k_f'(t) = \frac{d}{dt}\frac{\sqrt{f'(t)\cdot f'(t) * f''(t)\cdot f''(t) - (f'(t)\cdot f''(t))^2}}{(f'(t)\cdot f'(t))^{\frac{3}{2}}} = \frac{a'(t)b(t) - b'(t)a(t)}{b(t)^2}\\
+% TODO: chain rule?
+a = (f'\cdot f' * f''\cdot f'' - (f'\cdot f'')^2)^{\frac{1}{2}}\\
+a' = \frac{1}{2}(\frac{d}{dt}(f'\cdot f' * f''\cdot f'' - (f'\cdot f'')^2))^\frac{-1}{2} =
+\frac{1}{2}(\frac{d}{dt}(f'\cdot f' * f''\cdot f'') - \frac{d}{dt}(f'\cdot f'')^2)^\frac{-1}{2} =\\
+\frac{1}{2}((f''\cdot f'')\frac{df'\cdot f'}{dt} + (f'\cdot f')\frac{df''\cdot f''}{dt}) - 2(f'\cdot f'')\frac{d}{dt}(f'\cdot f''))^\frac{-1}{2} =^?\\
+\frac{1}{2}((f''\cdot f'')(f'\cdot f'' + f''\cdot f') + (f'\cdot f')(f''\cdot f''' + f''' \cdot f'') - 2(f'\cdot f'')(f'\cdot f''' + f''\cdot f''))^\frac{-1}{2} g=\\
+\frac{1}{2}((f''\cdot f'')(2f'\cdot f'') + (f'\cdot f')(2f''\cdot f''') - 2(f'\cdot f'')(f'\cdot f''' + f''\cdot f''))^\frac{-1}{2} =\\
+\frac{1}{2}(2(f''\cdot f'')(f'\cdot f'') + 2(f'\cdot f')(f''\cdot f''') - 2(f'\cdot f'')f'\cdot f''' - 2(f'\cdot f'')f''\cdot f''))^\frac{-1}{2}
+\\
+b(t) = (f'(t)\cdot f'(t))^{\frac{3}{2}}\\
+b' = \frac{d}{dt}(f'\cdot f')\frac{3}{2} = \frac{3}{2}(\frac{df'\cdot f'}{dt})^\frac{1}{2} =^?
+\frac{3}{2}(f''\cdot f' + f' \cdot f'')^\frac{1}{2} =
+\frac{3}{2}(2f' \cdot f'')^\frac{1}{2}\\
+$
+\end{document}
