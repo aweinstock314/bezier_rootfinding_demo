@@ -11,6 +11,21 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \begin{document}
+\section{Derivative of dot product}
+$
+f, g : \mathbb{R} \rightarrow \mathbb{R}^3\\
+f_x, f_y, f_z, g_x, g_y, g_z : \mathbb{R} \rightarrow \mathbb{R}\\
+f'(t) = \left[\begin{matrix}
+f_x'(t) & f_y'(t) & f_z'(t)
+\end{matrix}\right]\\
+f \cdot g : \mathbb{R} \rightarrow \mathbb{R}\\
+(f \cdot g)(t) = f_x(t)*g_x(t) + f_y(t) * g_y(t) + f_z(t) * g_z(t)\\
+\frac{d}{dt}(f \cdot g)(t) = \frac{d}{dt}(f_x(t)*g_x(t) + f_y(t) * g_y(t) + f_z(t) * g_z(t)) = \\
+\frac{d}{dt}(f_x(t)*g_x(t)) + \frac{d}{dt}(f_y(t) * g_y(t)) + \frac{d}{dt}(f_z(t) * g_z(t)) = \\
+(f_x'(t)*g_x(t) + f_x(t)g_x'(t)) + (f_y'(t)*g_y(t) + f_y(t)g_y'(t)) + (f_z'(t)*g_z(t) + f_z(t)g_z'(t)) = \\
+(f_x'(t)*g_x(t) + f_y'(t)*g_y(t) + f_z'(t)*g_z(t)) + (f_x(t)g_x'(t) + f_y(t)g_y'(t) + f_z(t)g_z'(t)) = \\
+(f' \cdot g)(t) + (f \cdot g')(t)
+$
 \section{Curvature}
 $
 f, f', f'' : \mathbb{R} \rightarrow \mathbb{R}^n\\

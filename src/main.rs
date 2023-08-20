@@ -100,13 +100,8 @@ fn test_gradientdescent_bezier() {
     let c = Lerp::lerp(a, d, 0.9) + Vec2::new(0.0, -h / 3.0);
 
     let f = |t: f32| {
-        let f1 = 3.0 * (1.0 - t) * (1.0 - t) * (b - a)
-            + 6.0 * (1.0 - t) * t * (c - b)
-            + 3.0 * t * t * (d - c);
-        let f2 = 6.0 * (1.0 - t) * (c - 2.0 * b + a) + 6.0 * t * (d - 2.0 * c + b);
-        let k = (f1.magnitude_squared() * f2.magnitude_squared() - f1.dot(f2).powf(2.0)).sqrt()
-            / f1.magnitude().powf(3.0);
-        k
+        let bz = CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d };
+        bz.k(t)
     };
     let t0 = gradient_descent(&mut |x| -f(x), 0.001, 0.0);
     println!("gradient_descent_bezier: {} {}", t0, f(t0));
@@ -114,12 +109,62 @@ fn test_gradientdescent_bezier() {
     println!("gradient_descent_bezier: {} {}", t1, f(t1));
 }
 
+trait BezierExt {
+    type Point;
+    fn f(&self, t: f32) -> Self::Point;
+    fn f1(&self, t: f32) -> Self::Point;
+    fn f2(&self, t: f32) -> Self::Point;
+    fn f3(&self, t: f32) -> Self::Point;
+    fn k(&self, t: f32) -> f32;
+}
+
+
+/*
+>>> f = a*(1 - t)**3 + 3 * b*t*(1 - t)**2 + 3 * c*t**2*(1 - t) + d*t**3
+>>> f.as_poly(t)
+Poly((-a + 3*b - 3*c + d)*t**3 + (3*a - 6*b + 3*c)*t**2 + (-3*a + 3*b)*t + a, t, domain='ZZ[a,b,c,d]')
+>>> f1 = sympy.diff(f, 't').as_poly(t)
+>>> f1
+Poly((-3*a + 9*b - 9*c + 3*d)*t**2 + (6*a - 12*b + 6*c)*t - 3*a + 3*b, t, domain='ZZ[a,b,c,d]')
+>>> f2 = sympy.diff(f1, 't').as_poly(t)
+>>> f2
+Poly((-6*a + 18*b - 18*c + 6*d)*t + 6*a - 12*b + 6*c, t, domain='ZZ[a,b,c,d]')
+>>> f3 = sympy.diff(f2, 't').as_poly(t)
+>>> f3
+Poly(-6*a + 18*b - 18*c + 6*d, t, domain='ZZ[a,b,c,d]')
+*/
+impl BezierExt for CubicBezier2<f32> {
+    type Point = Vec2<f32>;
+    fn f(&self, t: f32) -> Self::Point {
+        let CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d} = *self;
+        (-a + 3.0*b - 3.0*c + d)*t.powf(3.0) + (3.0*a - 6.0*b + 3.0*c)*t.powf(2.0) + (-3.0*a + 3.0*b)*t + a
+    }
+    fn f1(&self, t: f32) -> Self::Point {
+        let CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d} = *self;
+        (-3.0*a + 9.0*b - 9.0*c + 3.0*d)*t.powf(2.0) + (6.0*a - 12.0*b + 6.0*c)*t - 3.0*a + 3.0*b
+    }
+    fn f2(&self, t: f32) -> Self::Point {
+        let CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d} = *self;
+        (-6.0*a + 18.0*b - 18.0*c + 6.0*d)*t + 6.0*a - 12.0*b + 6.0*c
+    }
+    fn f3(&self, t: f32) -> Self::Point {
+        let CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d} = *self;
+        6.0*a + 18.0*b - 18.0*c + 6.0*d
+    }
+    fn k(&self, t: f32) -> f32 {
+        let (f1, f2) = (self.f1(t), self.f2(t));
+        (f1.magnitude_squared() * f2.magnitude_squared() - f1.dot(f2).powf(2.0)).sqrt()
+            / f1.magnitude().powf(3.0)
+    }
+}
+
 #[test]
-fn test_bezier() {
+fn test_bezier_uppersine() {
     let a = Vec2::new(0.0, 0.0);
     let b = Vec2::new(1.0, 0.0);
     let c = Vec2::new(1.0, 1.0);
     let d = Vec2::new(0.0, 1.0);
+    let bz = CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d };
     let f = |t: f32| {
         (1.0 - t).powf(3.0) * a
             + 3.0 * (1.0 - t).powf(2.0) * t * b
@@ -132,12 +177,16 @@ fn test_bezier() {
             + 3.0 * t * t * (d - c)
     };
     let f2 = |t: f32| 6.0 * (1.0 - t) * (c - 2.0 * b + a) + 6.0 * t * (d - 2.0 * c + b);
-    println!("f(0) = {}", f(0.0));
-    println!("f'(0) = {}", f1(0.0));
-    println!("f''(0) = {}", f2(0.0));
-    println!("f(1) = {}", f(1.0));
-    println!("f'(1) = {}", f1(1.0));
-    println!("f''(1) = {}", f2(1.0));
+    println!("f(0) = {} {}", bz.f(0.0), f(0.0));
+    println!("f'(0) = {}, {} {}", bz.f1(0.0), f1(0.0), bz.evaluate_derivative(0.0));
+    println!("f''(0) = {}, {}", bz.f2(0.0), f2(0.0));
+    println!("f(1) = {}", bz.f(1.0));
+    println!("f'(1) = {}", bz.f1(1.0));
+    println!("f''(1) = {}", bz.f2(1.0));
+    for i in 0..=10 {
+        let t = i as f32 / 10.0;
+        println!("time: {}, point: {}, k: {}", t, bz.f(t), bz.k(t));
+    }
 }
 
 #[macroquad::main("BasicShapes")]
@@ -182,15 +231,13 @@ async fn main() {
             draw_line(prev.x, prev.y, next.x, next.y, 2.0, GREEN);
             let mid = Lerp::lerp(prev, next, 0.5);
             //draw_text(&format!("{:?}", bz.evaluate_derivative(i as f32/16.0)), mid.x, mid.y - 20.0, 10.0, DARKGRAY);
-            //let f1 = t * t * qa + t * qb + qc;
             let sz = Vec2::new(w, h);
             let (a, b, c, d) = (a / sz, b / sz, c / sz, d / sz);
-            let f1 = 3.0 * (1.0 - t) * (1.0 - t) * (b - a)
-                + 6.0 * (1.0 - t) * t * (c - b)
-                + 3.0 * t * t * (d - c);
-            let f2 = 6.0 * (1.0 - t) * (c - 2.0 * b + a) + 6.0 * t * (d - 2.0 * c + b);
-            let k = (f1.magnitude_squared() * f2.magnitude_squared() - f1.dot(f2).powf(2.0)).sqrt()
-                / f1.magnitude().powf(3.0);
+            let bz = CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d };
+            let (f1, f2) = (bz.f1(t), bz.f2(t));
+            /*let k = (f1.magnitude_squared() * f2.magnitude_squared() - f1.dot(f2).powf(2.0)).sqrt()
+                / f1.magnitude().powf(3.0);*/
+            let k = bz.k(t);
             ks.push((t, k));
             //draw_text(&format!("f': {:0.2} {:0.2}", f1.x, f1.y), next.x, next.y - 40.0, 10.0, DARKGRAY);
             //draw_text(&format!("f'': {:0.2} {:0.2}", f2.x, f2.y), next.x, next.y - 30.0, 10.0, DARKGRAY);
@@ -207,13 +254,8 @@ async fn main() {
         let f = |t: f32| {
             let sz = Vec2::new(w, h);
             let (a, b, c, d) = (a / sz, b / sz, c / sz, d / sz);
-            let f1 = 3.0 * (1.0 - t) * (1.0 - t) * (b - a)
-                + 6.0 * (1.0 - t) * t * (c - b)
-                + 3.0 * t * t * (d - c);
-            let f2 = 6.0 * (1.0 - t) * (c - 2.0 * b + a) + 6.0 * t * (d - 2.0 * c + b);
-            let k = (f1.magnitude_squared() * f2.magnitude_squared() - f1.dot(f2).powf(2.0)).sqrt()
-                / f1.magnitude().powf(3.0);
-            k
+            let bz = CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d };
+            bz.k(t)
         };
         let mut steps0 = 0;
         let t0 = gradient_descent(
@@ -259,9 +301,8 @@ Poly(-6*a + 6*b - 6*c + 6*d, t, domain='ZZ[a,b,c,d]')
         let k_f1 = |t: f32| {
             let sz = Vec2::new(w, h);
             let (a, b, c, d) = (a / sz, b / sz, c / sz, d / sz);
-            let f1 = -3.0*(a - b + c - d)*t*t + 2.0 * (3.0*a - 2.0*b + c)*t - 3.0*a + b;
-            let f2 = -6.0 * (a - b + c - d)*t + 2.0 * (3.0*a - 2.0*b + c);
-            let f3 = -6.0 * (a - b + c - d);
+            let bz = CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d };
+            let (f1, f2, f3) = (bz.f1(t), bz.f2(t), bz.f3(t));
             let f1f1 = f1.dot(f1);
             let f1f2 = f1.dot(f2);
             let f1f3 = f1.dot(f3);
