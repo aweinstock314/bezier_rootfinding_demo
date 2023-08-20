@@ -1,7 +1,4 @@
-use macroquad::prelude::{
-    clear_background, draw_circle, draw_line, draw_text, next_frame, screen_height, screen_width,
-    BLUE, DARKGRAY, GREEN, LIGHTGRAY, RED,
-};
+use macroquad::prelude::{clear_background, draw_circle, draw_line, draw_text, next_frame, screen_height, screen_width, BLUE, DARKGRAY, GREEN, LIGHTGRAY, RED};
 use vek::*;
 
 mod cas;
@@ -118,7 +115,6 @@ trait BezierExt {
     fn k(&self, t: f32) -> f32;
 }
 
-
 /*
 >>> f = a*(1 - t)**3 + 3 * b*t*(1 - t)**2 + 3 * c*t**2*(1 - t) + d*t**3
 >>> f.as_poly(t)
@@ -152,25 +148,24 @@ f3 = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [6, 18, -18, 6]
 impl BezierExt for CubicBezier2<f32> {
     type Point = Vec2<f32>;
     fn f(&self, t: f32) -> Self::Point {
-        let CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d} = *self;
-        (-a + 3.0*b - 3.0*c + d)*t.powf(3.0) + (3.0*a - 6.0*b + 3.0*c)*t.powf(2.0) + (-3.0*a + 3.0*b)*t + a
+        let CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d } = *self;
+        (-a + 3.0 * b - 3.0 * c + d) * t.powf(3.0) + (3.0 * a - 6.0 * b + 3.0 * c) * t.powf(2.0) + (-3.0 * a + 3.0 * b) * t + a
     }
     fn f1(&self, t: f32) -> Self::Point {
-        let CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d} = *self;
-        (-3.0*a + 9.0*b - 9.0*c + 3.0*d)*t.powf(2.0) + (6.0*a - 12.0*b + 6.0*c)*t - 3.0*a + 3.0*b
+        let CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d } = *self;
+        (-3.0 * a + 9.0 * b - 9.0 * c + 3.0 * d) * t.powf(2.0) + (6.0 * a - 12.0 * b + 6.0 * c) * t - 3.0 * a + 3.0 * b
     }
     fn f2(&self, t: f32) -> Self::Point {
-        let CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d} = *self;
-        (-6.0*a + 18.0*b - 18.0*c + 6.0*d)*t + 6.0*a - 12.0*b + 6.0*c
+        let CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d } = *self;
+        (-6.0 * a + 18.0 * b - 18.0 * c + 6.0 * d) * t + 6.0 * a - 12.0 * b + 6.0 * c
     }
     fn f3(&self, t: f32) -> Self::Point {
-        let CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d} = *self;
-        6.0*a + 18.0*b - 18.0*c + 6.0*d
+        let CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d } = *self;
+        6.0 * a + 18.0 * b - 18.0 * c + 6.0 * d
     }
     fn k(&self, t: f32) -> f32 {
         let (f1, f2) = (self.f1(t), self.f2(t));
-        (f1.magnitude_squared() * f2.magnitude_squared() - f1.dot(f2).powf(2.0)).sqrt()
-            / f1.magnitude().powf(3.0)
+        (f1.magnitude_squared() * f2.magnitude_squared() - f1.dot(f2).powf(2.0)).sqrt() / f1.magnitude().powf(3.0)
     }
 }
 
@@ -181,17 +176,8 @@ fn test_bezier_uppersine() {
     let c = Vec2::new(1.0, 1.0);
     let d = Vec2::new(0.0, 1.0);
     let bz = CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d };
-    let f = |t: f32| {
-        (1.0 - t).powf(3.0) * a
-            + 3.0 * (1.0 - t).powf(2.0) * t * b
-            + 3.0 * (1.0 - t) * t.powf(2.0) * c
-            + t.powf(3.0) * d
-    };
-    let f1 = |t: f32| {
-        3.0 * (1.0 - t) * (1.0 - t) * (b - a)
-            + 6.0 * (1.0 - t) * t * (c - b)
-            + 3.0 * t * t * (d - c)
-    };
+    let f = |t: f32| (1.0 - t).powf(3.0) * a + 3.0 * (1.0 - t).powf(2.0) * t * b + 3.0 * (1.0 - t) * t.powf(2.0) * c + t.powf(3.0) * d;
+    let f1 = |t: f32| 3.0 * (1.0 - t) * (1.0 - t) * (b - a) + 6.0 * (1.0 - t) * t * (c - b) + 3.0 * t * t * (d - c);
     let f2 = |t: f32| 6.0 * (1.0 - t) * (c - 2.0 * b + a) + 6.0 * t * (d - 2.0 * c + b);
     println!("f(0) = {} {}", bz.f(0.0), f(0.0));
     println!("f'(0) = {}, {} {}", bz.f1(0.0), f1(0.0), bz.evaluate_derivative(0.0));
@@ -225,18 +211,9 @@ async fn main() {
         draw_circle(b.x, b.y, 5.0, BLUE);
         draw_circle(c.x, c.y, 5.0, BLUE);
         draw_circle(d.x, d.y, 5.0, BLUE);
-        let bz = CubicBezier2 {
-            start: a,
-            ctrl0: b,
-            ctrl1: c,
-            end: d,
-        };
+        let bz = CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d };
 
-        let (qa, qb, qc) = (
-            (-3.0 * a + 3.0 * b - 3.0 * c + 3.0 * d),
-            (6.0 * a - 4.0 * b + 2.0 * c),
-            (-3.0 * a + b),
-        );
+        let (qa, qb, qc) = ((-3.0 * a + 3.0 * b - 3.0 * c + 3.0 * d), (6.0 * a - 4.0 * b + 2.0 * c), (-3.0 * a + b));
         let mut prev = a;
         let mut ks = Vec::new();
         for i in 1..=64 {
@@ -252,7 +229,7 @@ async fn main() {
             let bz = CubicBezier2 { start: a, ctrl0: b, ctrl1: c, end: d };
             let (f1, f2) = (bz.f1(t), bz.f2(t));
             /*let k = (f1.magnitude_squared() * f2.magnitude_squared() - f1.dot(f2).powf(2.0)).sqrt()
-                / f1.magnitude().powf(3.0);*/
+            / f1.magnitude().powf(3.0);*/
             let k = bz.k(t);
             ks.push((t, k));
             //draw_text(&format!("f': {:0.2} {:0.2}", f1.x, f1.y), next.x, next.y - 40.0, 10.0, DARKGRAY);
@@ -295,25 +272,19 @@ async fn main() {
         let p1 = bz.evaluate(t1);
         draw_circle(p0.x, p0.y, 2.5, DARKGRAY);
         draw_circle(p1.x, p1.y, 2.5, DARKGRAY);
-        draw_text(
-            &format!("gradient descent steps: {} {}", steps0, steps1),
-            20.0,
-            20.0,
-            30.0,
-            DARKGRAY,
-        );
-/*
->>> a, b, c, d, t = sympy.symbols('a b c d t')
->>> f = (1-t)**3 * a + (1-t)**2*t * b + (1-t)*t**2 * c + t**3 * d
->>> f.as_poly(t)
-Poly((-a + b - c + d)*t**3 + (3*a - 2*b + c)*t**2 + (-3*a + b)*t + a, t, domain='ZZ[a,b,c,d]')
->>> sympy.diff(f.as_poly(t), 't')
-Poly((-3*a + 3*b - 3*c + 3*d)*t**2 + (6*a - 4*b + 2*c)*t - 3*a + b, t, domain='ZZ[a,b,c,d]')
->>> sympy.diff(sympy.diff(f.as_poly(t), 't'), 't')
-Poly((-6*a + 6*b - 6*c + 6*d)*t + 6*a - 4*b + 2*c, t, domain='ZZ[a,b,c,d]')
->>> sympy.diff(sympy.diff(sympy.diff(f.as_poly(t), 't'), 't'), 't')
-Poly(-6*a + 6*b - 6*c + 6*d, t, domain='ZZ[a,b,c,d]')
-*/
+        draw_text(&format!("gradient descent steps: {} {}", steps0, steps1), 20.0, 20.0, 30.0, DARKGRAY);
+        /*
+        >>> a, b, c, d, t = sympy.symbols('a b c d t')
+        >>> f = (1-t)**3 * a + (1-t)**2*t * b + (1-t)*t**2 * c + t**3 * d
+        >>> f.as_poly(t)
+        Poly((-a + b - c + d)*t**3 + (3*a - 2*b + c)*t**2 + (-3*a + b)*t + a, t, domain='ZZ[a,b,c,d]')
+        >>> sympy.diff(f.as_poly(t), 't')
+        Poly((-3*a + 3*b - 3*c + 3*d)*t**2 + (6*a - 4*b + 2*c)*t - 3*a + b, t, domain='ZZ[a,b,c,d]')
+        >>> sympy.diff(sympy.diff(f.as_poly(t), 't'), 't')
+        Poly((-6*a + 6*b - 6*c + 6*d)*t + 6*a - 4*b + 2*c, t, domain='ZZ[a,b,c,d]')
+        >>> sympy.diff(sympy.diff(sympy.diff(f.as_poly(t), 't'), 't'), 't')
+        Poly(-6*a + 6*b - 6*c + 6*d, t, domain='ZZ[a,b,c,d]')
+        */
         let k_f1 = |t: f32| {
             let sz = Vec2::new(w, h);
             let (a, b, c, d) = (a / sz, b / sz, c / sz, d / sz);
@@ -326,10 +297,10 @@ Poly(-6*a + 6*b - 6*c + 6*d, t, domain='ZZ[a,b,c,d]')
             let f2f3 = f2.dot(f3);
             let a = (f1f1 * f2f2 - f1f2.powf(2.0)).sqrt();
             let c = 0.5 * (f1f1 * f2f2 - f1f2.powf(2.0)).sqrt().recip();
-            let a1 = c * (2.0*f2f2*f1f2 + 2.0 * f1f1 * f2f3 - 2.0 * f1f2 * (f1f3 + f2f2));
+            let a1 = c * (2.0 * f2f2 * f1f2 + 2.0 * f1f1 * f2f3 - 2.0 * f1f2 * (f1f3 + f2f2));
             let b = f1f1.powf(1.5);
             let b1 = 3.0 * f1f1.sqrt() * f1f2;
-            let k1 = (a1*b - b1 * a) / (b * b);
+            let k1 = (a1 * b - b1 * a) / (b * b);
             k1
         };
         //let t2 = secant(&|x: f32| { let e = 0.01; (f(x + e/2.0) - f(x - e/2.0)) / e }, 0.5, 0.6);

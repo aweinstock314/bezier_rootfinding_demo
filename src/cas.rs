@@ -42,11 +42,7 @@ impl VFormula {
             VFormula::SMul(s, f) => {
                 let g = f.flatten();
                 if let VFormula::Sum(gs) = g {
-                    VFormula::Sum(
-                        gs.into_iter()
-                            .map(|g| VFormula::SMul(s.clone(), Box::new(g)).flatten())
-                            .collect(),
-                    )
+                    VFormula::Sum(gs.into_iter().map(|g| VFormula::SMul(s.clone(), Box::new(g)).flatten()).collect())
                 } else {
                     VFormula::SMul(s, Box::new(g))
                 }
@@ -138,9 +134,7 @@ impl Sub<VFormula> for VFormula {
 fn test_derivative() {
     use SFormula::T;
     use VFormula::P;
-    let f = (-P(0) + P(1) - P(2) + P(3)) * T.pow(3.0)
-        + (3.0 * P(0) - 2.0 * P(1) + P(2)) * T.pow(2.0)
-        + (-3.0 * P(0) + P(1)) * T;
+    let f = (-P(0) + P(1) - P(2) + P(3)) * T.pow(3.0) + (3.0 * P(0) - 2.0 * P(1) + P(2)) * T.pow(2.0) + (-3.0 * P(0) + P(1)) * T;
     println!("{:?}", f);
     println!("{:?}", f.simplify());
 }
