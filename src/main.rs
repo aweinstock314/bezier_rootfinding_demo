@@ -105,7 +105,7 @@ fn test_gradientdescent_bezier() {
             + 3.0 * t * t * (d - c);
         let f2 = 6.0 * (1.0 - t) * (c - 2.0 * b + a) + 6.0 * t * (d - 2.0 * c + b);
         let k = (f1.magnitude_squared() * f2.magnitude_squared() - f1.dot(f2).powf(2.0)).sqrt()
-            / f1.magnitude_squared().powf(3.0);
+            / f1.magnitude().powf(3.0);
         k
     };
     let t0 = gradient_descent(&mut |x| -f(x), 0.001, 0.0);
@@ -190,7 +190,7 @@ async fn main() {
                 + 3.0 * t * t * (d - c);
             let f2 = 6.0 * (1.0 - t) * (c - 2.0 * b + a) + 6.0 * t * (d - 2.0 * c + b);
             let k = (f1.magnitude_squared() * f2.magnitude_squared() - f1.dot(f2).powf(2.0)).sqrt()
-                / f1.magnitude_squared().powf(3.0);
+                / f1.magnitude().powf(3.0);
             ks.push((t, k));
             //draw_text(&format!("f': {:0.2} {:0.2}", f1.x, f1.y), next.x, next.y - 40.0, 10.0, DARKGRAY);
             //draw_text(&format!("f'': {:0.2} {:0.2}", f2.x, f2.y), next.x, next.y - 30.0, 10.0, DARKGRAY);
@@ -212,7 +212,7 @@ async fn main() {
                 + 3.0 * t * t * (d - c);
             let f2 = 6.0 * (1.0 - t) * (c - 2.0 * b + a) + 6.0 * t * (d - 2.0 * c + b);
             let k = (f1.magnitude_squared() * f2.magnitude_squared() - f1.dot(f2).powf(2.0)).sqrt()
-                / f1.magnitude_squared().powf(3.0);
+                / f1.magnitude().powf(3.0);
             k
         };
         let mut steps0 = 0;
@@ -221,7 +221,7 @@ async fn main() {
                 steps0 += 1;
                 -f(x)
             },
-            0.00001,
+            0.0001,
             0.0,
         );
         let mut steps1 = 0;
@@ -230,7 +230,7 @@ async fn main() {
                 steps1 += 1;
                 -f(x)
             },
-            0.00001,
+            0.0001,
             1.0,
         );
         let p0 = bz.evaluate(t0);
@@ -253,7 +253,7 @@ async fn main() {
             let f2 = 6.0 * (1.0 - t) * (c - 2.0 * b + a) + 6.0 * t * (d - 2.0 * c + b);
             let f3 = -6.0 * (a - b - c + d);
             let k = (f2.magnitude_squared() * f3.magnitude_squared() - f2.dot(f3).powf(2.0)).sqrt()
-                / f2.magnitude_squared().powf(3.0);
+                / f2.magnitude().powf(3.0);
             k
         };
         /*let t2 = secant(&|x: f32| { let e = 0.01; (f(x + e/2.0) - f(x - e/2.0)) / e }, 0.5, 0.6);
